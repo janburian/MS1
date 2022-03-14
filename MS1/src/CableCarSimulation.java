@@ -11,17 +11,14 @@ public class CableCarSimulation extends Process {
     /** Celková délka lana [m] */ 
     int ropeLength = 4_000; 
     
-    /** Vzdálenost mezi kabinami na lanì [m]*/ 
-    double distanceCableCars = (double) ropeLength / numberOfCableCars;
-    
     /** Definice fronty kabin */
     Head cableCarsQueue = new Head();
     
     /** Poèet vygenerovaných kabin */ 
-    protected int cableCarsCounter;
+    protected int cableCarsCounter = 0;
        
     
-    /** Poèet lyžaøù ve frontì */
+    /** Poèet lyžaøù, kteøí prošli frontou */
     int numberOfSkiers;
     
     /** Definice fronty lyžaøù */
@@ -35,24 +32,18 @@ public class CableCarSimulation extends Process {
     double simPeriod = 200;
     
     Random random = new Random(9);
+    
     double throughTime; 
+    
     long startTime = System.currentTimeMillis();
-	
+    
     
     CableCarSimulation(int n) { 
     	numberOfCableCars = n; 
     }
-
+  
+    
     public void actions() { 
-    	/*
-    	CableCar[] cableCars = new CableCar[numberOfCableCars]; 
-    	
- 
-    	for (int i = 0; i < cableCars.length; i++) {
-    		cableCars[i].into(cableCarsQueue);
-    	}
-    	*/
-    	
     	activate(new CableCarGenerator());
         activate(new SkiersGenerator());
         
@@ -63,12 +54,12 @@ public class CableCarSimulation extends Process {
     void report() {
         System.out.println(numberOfCableCars + " cable cars simulation");
         System.out.println("Number of generated cablecars: " + cableCarsCounter);
-        System.out.println("Ratio of generated cablecars to number of cablecars: " + (double) cableCarsCounter / numberOfCableCars);
+        System.out.println("Ratio of generated cablecars to total number of cablecars: " + (double) cableCarsCounter / numberOfCableCars);
         
         System.out.println("Total number of skiers = " + numberOfSkiers);
         java.text.NumberFormat fmt = java.text.NumberFormat.getNumberInstance();
         fmt.setMaximumFractionDigits(2);
-        System.out.println("Av.elapsed time = " + fmt.format(throughTime/numberOfSkiers));
+        System.out.println("Average waiting queue time = " + fmt.format(throughTime/numberOfSkiers));
         System.out.println("Maximum queue length of skiers = " + maxLengthSkiersQueue);
         System.out.println("\nExecution time: " +
                            fmt.format((System.currentTimeMillis() 
@@ -84,26 +75,28 @@ public class CableCarSimulation extends Process {
             int qLength = skiersQueue.cardinal();
             if (maxLengthSkiersQueue < qLength) 
                 maxLengthSkiersQueue = qLength;
-            passivate();
             numberOfSkiers++;
+            passivate();
             throughTime += time() - entryTime;
         }		
     }
 
-    class CableCar extends Process { 
-
+    class CableCar extends Process {
+    	
     	public CableCar(int capacity) {
     		cableCarCapacity = capacity; 
     	}
     	
     	/** Poèet volných míst v kabince */
-    	protected int remainingPlaces = cableCarCapacity; 
-   
+    	protected int remainingPlaces; 
+    	
         public void actions() { 
         	into(cableCarsQueue); 
-            while (true) { 
+        	int index = 0; 
+            while (index < 1000) { 
                 while (!skiersQueue.empty()) {
                     CableCar cableCar = (CableCar) cableCarsQueue.first(); // 1. dostupna lanovka
+                    cableCar.remainingPlaces = cableCarCapacity;
                     
                     double cableCarArrivalTime = time();
    
@@ -111,13 +104,14 @@ public class CableCarSimulation extends Process {
                     	Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
                     	served.out(); // fronta bez jednoho lyzare # TODO: ppst, ze lyzar do lanovky z nejakeho duvodu nenastoupi
                         cableCar.remainingPlaces--; // lyzar nastoupi do kabinky
-                        if (cableCar.remainingPlaces == 0) { // 
-                        	 cableCar.out(); 
-                        	 break; 
+                        if (cableCar.remainingPlaces == 0) {
+                        	cableCar.out(); 
+                        	break; 
                         }  
                     }
                     cableCar.out();
                 }
+                index++; // odstranit
             }
         }
     }
@@ -127,18 +121,21 @@ public class CableCarSimulation extends Process {
         public void actions() {
              while (time() <= simPeriod) {
                   activate(new Skier());
-                  hold(random.negexp(20/1.0)); // 20 lyzaru se stredni hodnotou rovne 1 minute? 
+                  hold(random.negexp(10/1.0)); // 10 lyzaru se stredni hodnotou rovne 1 minute? 
              }
         }
     }
     
     class CableCarGenerator extends Process {
+    	double distanceCableCars = (double) ropeLength / numberOfCableCars;
+    	double generatorPeriod = distanceCableCars * 0.1; 
+    	
     	public void actions() {
     		while (time() <= simPeriod) {
     			activate(new CableCar(cableCarCapacity));
     			cableCarsCounter++; 
-    			hold(distanceCableCars * 0.1); // generování kabin závislé na vzdálenosti 
-    												  // mezi jednotlivými kabinami 
+    			hold(generatorPeriod); // generování kabin závislé na vzdálenosti 
+    								   // mezi jednotlivými kabinami 
     		}
     	}
     }
