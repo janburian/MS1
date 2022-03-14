@@ -4,27 +4,9 @@ import javaSimulation.Process;
 public class CableCarSimulation extends Process {
 	/** Poèet kabin */
     int numberOfCableCars;
-       
-    /** Poèet lyžaøù ve frontì */
-    int numberOfSkiers;
     
-    /** Simulaèní perioda */
-    double simPeriod = 200; 
-    
-    /** Kapacita kabiny */
+    /** Kapacita kabiny [poèet osob] */
     int cableCarCapacity = 10; 
-    
-    /** Definice fronty lyžaøù */
-    Head skiersQueue = new Head();
-    
-    /** Definice fronty kabin */
-    Head cableCarsQueue = new Head();
-    
-    /** Poèet vygenerovaných lanovek */ 
-    protected int cableCarsCounter = 0;
-    
-    /** Maximální délka fronty lyžaøù */
-    int maxLengthSkiersQueue;
     
     /** Celková délka lana [m] */ 
     int ropeLength = 4_000; 
@@ -32,6 +14,25 @@ public class CableCarSimulation extends Process {
     /** Vzdálenost mezi kabinami na lanì [m]*/ 
     double distanceCableCars = (double) ropeLength / numberOfCableCars;
     
+    /** Definice fronty kabin */
+    Head cableCarsQueue = new Head();
+    
+    /** Poèet vygenerovaných kabin */ 
+    protected int cableCarsCounter;
+       
+    
+    /** Poèet lyžaøù ve frontì */
+    int numberOfSkiers;
+    
+    /** Definice fronty lyžaøù */
+    Head skiersQueue = new Head();
+    
+    /** Maximální délka fronty lyžaøù */
+    int maxLengthSkiersQueue;
+    
+    
+    /** Simulaèní perioda */
+    double simPeriod = 200;
     
     Random random = new Random(9);
     double throughTime; 
