@@ -104,9 +104,9 @@ public class CableCarSimulation extends Process {
                 while (!skiersQueue.empty()) {
                     CableCar cableCar = (CableCar) cableCarsQueue.first(); // 1. dostupna lanovka
                     
-                    long cableCarArrivalTime = System.currentTimeMillis();
+                    double cableCarArrivalTime = time();
    
-                    while (System.currentTimeMillis() - cableCarArrivalTime > 1_000) {
+                    while (time() - cableCarArrivalTime > 20) {
                     	Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
                     	served.out(); // fronta bez jednoho lyzare # TODO: ppst, ze lyzar do lanovky z nejakeho duvodu nenastoupi
                         cableCar.remainingPlaces--; // lyzar nastoupi do kabinky
