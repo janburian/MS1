@@ -6,7 +6,7 @@ public class CableCarSimulation extends Process {
     int numberOfCableCars;
     
     /** Kapacita kabiny [poèet osob] */
-    int cableCarCapacity = 10; 
+    int cableCarCapacity; 
     
     /** Celková délka lana [m] */ 
     int ropeLength = 4_000; 
@@ -31,7 +31,7 @@ public class CableCarSimulation extends Process {
     /** Simulaèní perioda */
     double simPeriod = 10;
     
-    /** Náhodná promìnná pro generování lyžaøù do fronty se seedem rovno 9 */
+    /** Náhodná promìnná pro generování lyžaøù do fronty s násadou rovno 9 */
     Random random = new Random(9);
     
     /** Celková doba trvání všech prùchodù lidí ve frontì */
@@ -86,33 +86,38 @@ public class CableCarSimulation extends Process {
 
     class CableCar extends Process {
     	
+    	/** Poèet volných míst v kabince */
+    	protected int remainingPlaces; 
+    	
+    	/** Doba lanovky ve stanici (doba, kdy je možné do lanovky nastoupit) */
+    	protected double timeInStation = 20; 
+    	
     	public CableCar(int capacity) {
     		cableCarCapacity = capacity; 
     	}
     	
-    	/** Poèet volných míst v kabince */
-    	protected int remainingPlaces; 
-    	
         public void actions() { 
-        	into(cableCarsQueue); 
-   
-            while (!skiersQueue.empty()) { 
-                CableCar cableCar = (CableCar) cableCarsQueue.first(); // 1. dostupna lanovka
-                cableCar.remainingPlaces = cableCarCapacity;
+            while (true) { 
+                remainingPlaces = cableCarCapacity;
                     
-	            double cableCarArrivalTime = time();
-	            double cableCarDepartureTime = cableCarArrivalTime + 20; 
+	            double cableCarArrivalTime = time(); 
+	            double cableCarDepartureTime = cableCarArrivalTime + timeInStation; 
 	            
 	            while (time() < cableCarDepartureTime) { // cas ve stanici 
-	            	Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
-	            	served.out(); // fronta bez jednoho lyzare # TODO: ppst, ze lyzar do lanovky z nejakeho duvodu nenastoupi
-	            	cableCar.remainingPlaces--; // lyzar nastoupi do kabinky
-			        if (cableCar.remainingPlaces == 0) {
-			        	cableCar.out(); // odstraneni z fronty, pokud jiz nejsou volna mista
-			        	break; 
-			        }  
+	            	if (!skiersQueue.empty()) {
+	            		Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
+		            	served.out(); // fronta bez jednoho lyzare # TODO: ppst, ze lyzar do lanovky z nejakeho duvodu nenastoupi
+		            	activate(served);
+		            	remainingPlaces--; // lyzar nastoupi do kabinky
+		            	
+	            	   if (remainingPlaces == 0) {
+				        	out(); // odstraneni z fronty, pokud jiz nejsou volna mista
+				        	break; 
+				        }  
+	            	}
+			        hold(0.5); 
 	            }	
-			   cableCar.out(); // odstraneni z fronty, pokud jiz kabinka vyjela ze stanice
+			   out(); // odstraneni z fronty, pokud jiz kabinka vyjela ze stanice
             }
         }
     }
@@ -132,9 +137,12 @@ public class CableCarSimulation extends Process {
     	double timeConstant = 0.1; 
     	double generatorPeriod = distanceCableCars * timeConstant; 
     	
+    	private CableCar cableCar; 
+    	
     	public void actions() {
-    		while (time() <= simPeriod) {
-    			activate(new CableCar(cableCarCapacity));
+    		while (true) {
+    			cableCar = new CableCar(10); 
+    			activate(cableCar);
     			cableCarsCounter++; 
     			hold(generatorPeriod); // pravidelne generování kabin, závislé na vzdálenosti 
     								   // mezi jednotlivými kabinami 
