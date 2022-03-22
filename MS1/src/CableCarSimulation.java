@@ -29,7 +29,7 @@ public class CableCarSimulation extends Process {
     
     
     /** Simulaèní perioda */
-    double simPeriod = 10;
+    double simPeriod = 10; 
     
     /** Náhodná promìnná pro generování lyžaøù do fronty s násadou rovno 9 */
     Random random = new Random(9);
@@ -50,7 +50,7 @@ public class CableCarSimulation extends Process {
     	activate(new SkiersGenerator());
     	activate(new CableCarGenerator());
         
-        hold(simPeriod + 1000000);	
+        hold(simPeriod + 10000);	
         report();
     }
 	
@@ -75,10 +75,10 @@ public class CableCarSimulation extends Process {
         public void actions() {
             double entryTime = time();
             into(skiersQueue);
+            numberOfSkiers++;
             int qLength = skiersQueue.cardinal();
             if (maxLengthSkiersQueue < qLength) 
                 maxLengthSkiersQueue = qLength;
-            numberOfSkiers++;
             passivate();
             throughTime += time() - entryTime;
         }		
@@ -104,7 +104,7 @@ public class CableCarSimulation extends Process {
 	            double cableCarDepartureTime = cableCarArrivalTime + timeInStation; 
 	            
 	            while (time() < cableCarDepartureTime) { // cas ve stanici 
-	            	if (!skiersQueue.empty()) {
+	            	while (!skiersQueue.empty()) {
 	            		Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
 		            	served.out(); // fronta bez jednoho lyzare # TODO: ppst, ze lyzar do lanovky z nejakeho duvodu nenastoupi
 		            	activate(served);
@@ -115,7 +115,7 @@ public class CableCarSimulation extends Process {
 				        	break; 
 				        }  
 	            	}
-			        hold(0.5); 
+			        hold(3); 
 	            }	
 			   out(); // odstraneni z fronty, pokud jiz kabinka vyjela ze stanice
             }
@@ -127,7 +127,7 @@ public class CableCarSimulation extends Process {
         public void actions() {
              while (time() <= simPeriod) {
                   activate(new Skier());
-                  hold(random.negexp(10/1.0)); // 10 lyzaru se stredni hodnotou rovne 1 minute 
+                  hold(random.negexp(20/1.0)); // 20 lyzaru se stredni hodnotou rovne 1 minute 
              }
         }
     }
