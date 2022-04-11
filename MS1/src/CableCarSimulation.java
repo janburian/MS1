@@ -110,12 +110,12 @@ public class CableCarSimulation extends Process {
 	            		Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
 	            		if (random.nextDouble() < 0.75) { // s ppsti 3/4 lyzar nastoupi do kabinky
 	            			served.out(); // fronta bez jednoho lyzare 
+	            			activate(served);
+	            			remainingPlaces--; // lyzar nastoupi do kabinky
 	            		}
-		            	activate(served);
-		            	remainingPlaces--; // lyzar nastoupi do kabinky
 		            	
 	            	   if (remainingPlaces == 0) {
-				        	out(); // odstraneni z fronty, pokud jiz nejsou volna mista
+				        	out(); // odstraneni kabiny z fronty, pokud jiz nejsou volna mista
 				        	break; 
 				        }  
 	            	}
