@@ -50,7 +50,7 @@ public class CableCarSimulation extends Process {
     	activate(new SkiersGenerator());
     	activate(new CableCarGenerator());
         
-        hold(simPeriod + 10000);	
+        hold(simPeriod + 1000);	
         report();
     }
 	
@@ -97,6 +97,8 @@ public class CableCarSimulation extends Process {
     	}
     	
         public void actions() { 
+        	into(cableCarsQueue);
+        	
             while (true) { 
                 remainingPlaces = cableCarCapacity;
                     
@@ -106,7 +108,9 @@ public class CableCarSimulation extends Process {
 	            while (time() < cableCarDepartureTime) { // cas ve stanici 
 	            	while (!skiersQueue.empty()) {
 	            		Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
-		            	served.out(); // fronta bez jednoho lyzare # TODO: ppst, ze lyzar do lanovky z nejakeho duvodu nenastoupi
+	            		if (random.nextDouble() < 0.75) { // s ppsti 3/4 lyzar nastoupi do kabinky
+	            			served.out(); // fronta bez jednoho lyzare 
+	            		}
 		            	activate(served);
 		            	remainingPlaces--; // lyzar nastoupi do kabinky
 		            	
@@ -115,7 +119,7 @@ public class CableCarSimulation extends Process {
 				        	break; 
 				        }  
 	            	}
-			        hold(3); 
+			        hold(0.5); 
 	            }	
 			   out(); // odstraneni z fronty, pokud jiz kabinka vyjela ze stanice
             }
@@ -127,7 +131,7 @@ public class CableCarSimulation extends Process {
         public void actions() {
              while (time() <= simPeriod) {
                   activate(new Skier());
-                  hold(random.negexp(20/1.0)); // 20 lyzaru se stredni hodnotou rovne 1 minute 
+                  hold(random.negexp(30/1.0)); // 30 lyzaru se stredni hodnotou rovne 1 minute 
              }
         }
     }
