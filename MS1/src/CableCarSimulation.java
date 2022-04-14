@@ -2,45 +2,45 @@ import javaSimulation.*;
 import javaSimulation.Process;
 
 public class CableCarSimulation extends Process {
-	/** Poèet kabin */
+	/** Pocet kabin */
     int numberOfCableCars;
     
-    /** Kapacita kabiny [poèet osob] */
+    /** Kapacita kabiny [pocet osob] */
     int cableCarCapacity; 
     
-    /** Celková délka lana [m] */ 
+    /** Celkova delka lana [m] */ 
     int ropeLength = 4_000; 
     
     /** Definice fronty kabin */
     Head cableCarsQueue = new Head();
     
-    /** Poèet vygenerovaných kabin */ 
+    /** Poèet vygenerovanych kabin */ 
     protected int cableCarsCounter = 0;
        
     
-    /** Poèet lyžaøù, kteøí prošli frontou */
+    /** Poèet lyzaru, kteri prosli frontou */
     int numberOfSkiers;
     
-    /** Definice fronty lyžaøù */
+    /** Definice fronty lyzarù */
     Head skiersQueue = new Head();
     
-    /** Maximální délka fronty lyžaøù */
+    /** Maximalni delka fronty lyzaru */
     int maxLengthSkiersQueue;
     
     
-    /** Simulaèní perioda */
-    double simPeriod = 10; 
+    /** Simulacni perioda */
+    double simPeriod = 1; 
     
-    /** Náhodná promìnná pro generování lyžaøù do fronty s násadou rovno 9 */
+    /** Nahodna promenna pro generovani lyzaru do fronty s nasadou rovno 9 */
     Random random = new Random(9);
     
-    /** Celková doba trvání všech prùchodù lidí ve frontì */
+    /** Celková doba trvani vsech pruchodù lidi ve fronte */
     double throughTime; 
     
-    /** Èas zaèátku simulace */
+    /** Cas zacatku simulace */
     long startTime = System.currentTimeMillis();
     
-    /** Konstruktor tøídy CableCarSimulation */
+    /** Konstruktor tridy CableCarSimulation */
     CableCarSimulation(int n) { 
     	numberOfCableCars = n; 
     }
@@ -82,25 +82,35 @@ public class CableCarSimulation extends Process {
             passivate();
             throughTime += time() - entryTime;
             
-            CableCar cablecar = (CableCar) cableCarsQueue.first(); 
-            while (cablecar.remainingPlaces <= cableCarCapacity) {
-            	out();
-            	cablecar.remainingPlaces--; 
+            CableCar cableCar = (CableCar) cableCarsQueue.first(); // nastoupi do prvni dostupne kabiny
+            
+            if (cableCar.remainingPlaces > 0) {
+            	cableCar.remainingPlaces--; 
+            	out(); // prvni lyzar odstranen z fronty
+            	Skier successor = (Skier) skiersQueue.first(); // nasledujici lyzar ve fronte, ktery je ted prvni na rade
+            	if (successor != null) // pokud je dalsi lyzar ve fronte
+            		activate(successor); // aktivuji dalsiho lyzare ve fronte
             }
-            cablecar.out();
+            
+            else if (cableCar.remainingPlaces == 0) { // kabinka je plna
+            	 cableCar.out(); 
+            	 CableCar cableCarNext = (CableCar) cableCarsQueue.first(); // dalsi kabinka
+                 activate(cableCarNext); //?
+            }
+          }
         }		
-    }
 
     class CableCar extends Process {
     	
-    	/** Poèet volných míst v kabince */
+    	/** Poèet volnych mist v kabince */
     	protected int remainingPlaces; 
     	
-    	/** Doba lanovky ve stanici (doba, kdy je možné do lanovky nastoupit) */
+    	/** Doba lanovky ve stanici (doba, kdy je mozne do lanovky nastoupit) */
     	protected double timeInStation = 20; 
     	
     	public CableCar(int capacity) {
-    		cableCarCapacity = capacity; 
+    		cableCarCapacity = capacity;  
+    		remainingPlaces = cableCarCapacity; 
     	}
     	
         public void actions() { 
@@ -108,7 +118,7 @@ public class CableCarSimulation extends Process {
 	        Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
 	        activate(served); 
 	        hold(timeInStation); // kabinka ceka ve stanici urcitou dobu
-	        out(); 
+	        out(); // po uplynute dobe je prvni kabinka odstranena z fronty 
         }
     }
 
@@ -127,15 +137,12 @@ public class CableCarSimulation extends Process {
     	double timeConstant = 0.1; 
     	double generatorPeriod = distanceCableCars * timeConstant; 
     	
-    	private CableCar cableCar; 
-    	
     	public void actions() {
     		while (true) {
-    			cableCar = new CableCar(10); 
-    			activate(cableCar);
+    			activate(new CableCar(10));
     			cableCarsCounter++; 
-    			hold(generatorPeriod); // pravidelne generování kabin, závislé na vzdálenosti 
-    								   // mezi jednotlivými kabinami 
+    			hold(generatorPeriod); // pravidelne generovani kabin, zavisle na vzdalenosti 
+    								   // mezi jednotlivymi kabinami 
     		}
     	}
     }
