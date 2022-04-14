@@ -81,6 +81,13 @@ public class CableCarSimulation extends Process {
                 maxLengthSkiersQueue = qLength;
             passivate();
             throughTime += time() - entryTime;
+            
+            CableCar cablecar = (CableCar) cableCarsQueue.first(); 
+            while (cablecar.remainingPlaces <= cableCarCapacity) {
+            	out();
+            	cablecar.remainingPlaces--; 
+            }
+            cablecar.out();
         }		
     }
 
@@ -98,31 +105,10 @@ public class CableCarSimulation extends Process {
     	
         public void actions() { 
         	into(cableCarsQueue);
-        	
-            while (true) { 
-                remainingPlaces = cableCarCapacity;
-                    
-	            double cableCarArrivalTime = time(); 
-	            double cableCarDepartureTime = cableCarArrivalTime + timeInStation; 
-	            
-	            while (time() < cableCarDepartureTime) { // cas ve stanici 
-	            	while (!skiersQueue.empty()) {
-	            		Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
-	            		if (random.nextDouble() < 0.75) { // s ppsti 3/4 lyzar nastoupi do kabinky
-	            			served.out(); // fronta bez jednoho lyzare 
-	            			activate(served);
-	            			remainingPlaces--; // lyzar nastoupi do kabinky
-	            		}
-		            	
-	            	   if (remainingPlaces == 0) {
-				        	out(); // odstraneni kabiny z fronty, pokud jiz nejsou volna mista
-				        	break; 
-				        }  
-	            	}
-			        hold(0.5); 
-	            }	
-			   out(); // odstraneni z fronty, pokud jiz kabinka vyjela ze stanice
-            }
+	        Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
+	        activate(served); 
+	        hold(timeInStation); // kabinka ceka ve stanici urcitou dobu
+	        out(); 
         }
     }
 
