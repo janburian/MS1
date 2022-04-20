@@ -29,7 +29,7 @@ public class CableCarSimulation extends Process {
     
     
     /** Doba simulace */
-    double simPeriod = 600; // 1200 s
+    double simPeriod = 600; // 600 s
     
     /** Nahodna promenna pro generovani lyzaru do fronty s nasadou rovno 9 */
     Random random = new Random(9);
@@ -126,8 +126,7 @@ public class CableCarSimulation extends Process {
 	        hold(timeInStation); // kabinka ceka ve stanici urcitou dobu
 	        if (remainingPlaces > 0 && !(skiersQueue.empty())) 
 	        	passivate();
-	        else 
-	        	out(); // po uplynute dobe je prvni kabinka odstranena z fronty
+	        out(); // po uplynute dobe je prvni kabinka odstranena z fronty
         }
     }
 
