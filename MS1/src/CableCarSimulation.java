@@ -28,8 +28,8 @@ public class CableCarSimulation extends Process {
     int maxLengthSkiersQueue;
     
     
-    /** Simulacni perioda */
-    double simPeriod = 1; 
+    /** Doba simulace */
+    double simPeriod = 600; // 1200 s
     
     /** Nahodna promenna pro generovani lyzaru do fronty s nasadou rovno 9 */
     Random random = new Random(9);
@@ -47,10 +47,10 @@ public class CableCarSimulation extends Process {
   
     
     public void actions() { 
-    	activate(new SkiersGenerator());
     	activate(new CableCarGenerator());
+    	activate(new SkiersGenerator());
     	
-        hold(simPeriod + 1000);	
+        hold(simPeriod + 10000);	
         report();
     }
 	
@@ -73,7 +73,7 @@ public class CableCarSimulation extends Process {
     
     class Skier extends Process {
     	double desiredStandardDeviation = 0.5; // rozptyl normalniho rozdeleni 
-    	double desiredMean = 3; // stredni hodnota normalniho rozdeleni (stredni doba nastupu lyzare)
+    	double desiredMean = 5; // stredni hodnota normalniho rozdeleni (stredni doba nastupu lyzare)
     	
         public void actions() {
             double entryTime = time();
@@ -82,29 +82,29 @@ public class CableCarSimulation extends Process {
             int qLength = skiersQueue.cardinal();
             if (maxLengthSkiersQueue < qLength) 
                 maxLengthSkiersQueue = qLength;
-            
-            while (cableCarsQueue.empty() || skiersQueue.cardinal() > 1) {
+       
+            while (cableCarsQueue.empty() || this != skiersQueue.first()) { // lyzar neni prvni nebo nema kam nastoupit
             	passivate();
             }
             
             CableCar cableCar = (CableCar) cableCarsQueue.first(); // nastoupi do prvni dostupne kabiny
+            double enteringTime = random.nextGaussian() * desiredStandardDeviation + desiredMean; // doba nastupu lyzare
             
-            if (cableCar.remainingPlaces > 0) {
-            	cableCar.remainingPlaces--; 
-            	out(); // prvni lyzar odstranen z fronty
-            	double enteringTime = random.nextGaussian() * desiredStandardDeviation + desiredMean; // doba nastupu lyzare
-            	hold(enteringTime); 
+            if (cableCar.remainingPlaces > 0) { // kabina ma volna mista
+	        	cableCar.remainingPlaces--; 
+	        	hold(enteringTime); 
+	        	out(); // prvni lyzar odstranen z fronty
             	
-            	if (cableCar.remainingPlaces == 0) // kabina je plna
-            		activate(cableCar);
+	        	if (cableCar.remainingPlaces == 0) // kabina je plna
+	        		activate(cableCar);
             	
             	Skier successor = (Skier) skiersQueue.first(); // nasledujici lyzar ve fronte, ktery je ted prvni na rade
                 if (successor != null) // pokud je dalsi lyzar ve fronte
                    activate(successor); // aktivuji dalsiho lyzare ve fronte
              }
             throughTime += time() - entryTime;
-          }
-        }		
+        }
+    }
 
     class CableCar extends Process {
     	
@@ -112,7 +112,7 @@ public class CableCarSimulation extends Process {
     	protected int remainingPlaces; 
     	
     	/** Doba lanovky ve stanici (doba, kdy je mozne do lanovky nastoupit) */
-    	protected double timeInStation = 15; 
+    	protected double timeInStation = 40; // s
     	
     	public CableCar(int capacity) {
     		cableCarCapacity = capacity;  
@@ -124,12 +124,10 @@ public class CableCarSimulation extends Process {
 	        Skier served = (Skier) skiersQueue.first(); // prvni lyzar z fronty
 	        activate(served); 
 	        hold(timeInStation); // kabinka ceka ve stanici urcitou dobu
-	        if (remainingPlaces > 0 && !(skiersQueue.empty())) {
+	        if (remainingPlaces > 0 && !(skiersQueue.empty())) 
 	        	passivate();
-	        } 
-	        else {
-	        	out(); // po uplynute dobe je prvni kabinka odstranena z fronty 
-	        }
+	        else 
+	        	out(); // po uplynute dobe je prvni kabinka odstranena z fronty
         }
     }
 
@@ -138,19 +136,20 @@ public class CableCarSimulation extends Process {
         public void actions() {
              while (time() <= simPeriod) {
                   activate(new Skier());
-                  hold(random.negexp(100/1.0)); // 100 lyzaru se stredni hodnotou rovne 1 minute 
+                  hold(random.negexp(5/60.0)); // 5 lyzaru se stredni hodnotou rovne 1 minute (= 60 sekund) 
              }
         }
     }
     
+    
     class CableCarGenerator extends Process {
     	double distanceCableCars = (double) ropeLength / numberOfCableCars;
-    	double timeConstant = 0.1; 
-    	double generatorPeriod = distanceCableCars * timeConstant; 
+    	double timeConstant = 0.4; 
+    	double generatorPeriod = distanceCableCars * timeConstant; // s
     	
     	public void actions() {
-    		while (true) {
-    			activate(new CableCar(10));
+    		while (time() <= simPeriod) {
+    			activate(new CableCar(6));
     			cableCarsCounter++; 
     			hold(generatorPeriod); // pravidelne generovani kabin, zavisle na vzdalenosti 
     								   // mezi jednotlivymi kabinami 
@@ -160,6 +159,7 @@ public class CableCarSimulation extends Process {
 
    
     public static void main(String args[]) {
-        activate(new CableCarSimulation(40));
+        activate(new CableCarSimulation(30));
     } 
+    
 }
